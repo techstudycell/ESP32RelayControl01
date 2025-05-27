@@ -1,5 +1,15 @@
-let user = null;
+// Check user login status
+firebase.auth().onAuthStateChanged(function(user) {
+  if (user) {
+    console.log("✅ User authenticated:", user.email);
+    document.getElementById("relayContainer").style.display = "block";
+  } else {
+    console.warn("⚠️ No user is signed in.");
+    document.getElementById("relayContainer").style.display = "none";
+  }
+});
 
+// Login function
 function login() {
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
@@ -7,23 +17,32 @@ function login() {
   firebase.auth().signInWithEmailAndPassword(email, password)
     .then((userCredential) => {
       console.log("✅ Login successful", userCredential.user);
-      document.getElementById("relayContainer").style.display = "block";
+      // UI visibility handled by onAuthStateChanged
     })
     .catch((error) => {
-      console.error("❌ Login failed", error.message);
+      console.error("❌ Login failed:", error.message);
     });
 }
 
-
+// Logout function
 function logout() {
   firebase.auth().signOut().then(() => {
-    user = null;
-    location.reload();
+    console.log("🚪 Logged out successfully");
+    document.getElementById("relayContainer").style.display = "none";
+  }).catch((error) => {
+    console.error("❌ Logout failed:", error.message);
   });
 }
 
+// Toggle individual relay
 function toggleRelay(relayNumber) {
-  const relayPath = "Relays/relay" + relayNumber;
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    console.warn("⚠️ User not authenticated");
+    return;
+  }
+
+  const relayPath = `Relays/relay${relayNumber}`;
   const relayRef = firebase.database().ref(relayPath);
 
   relayRef.once("value")
@@ -34,6 +53,7 @@ function toggleRelay(relayNumber) {
       relayRef.set(newValue)
         .then(() => {
           console.log(`✅ Relay ${relayNumber} toggled to ${newValue}`);
+          document.getElementById(`status${relayNumber}`).textContent = `Status: ${newValue ? 'ON' : 'OFF'}`;
         })
         .catch(error => {
           console.error(`❌ Failed to write to Firebase for Relay ${relayNumber}:`, error);
@@ -45,31 +65,30 @@ function toggleRelay(relayNumber) {
     });
 }
 
+// Turn off all relays
 function turnAllOff() {
-  const db = firebase.database();
-  for (let i = 1; i <= 4; i++) {
-    db.ref('Relays/relay' + i).set(false)
-      .then(() => {
-        console.log(`Relay ${i} turned OFF`);
-      })
-      .catch(error => {
-        console.error(`Failed to turn OFF relay${i}:`, error);
-        alert(`Error turning off relay${i}: ` + error.message);
-      });
+  const user = firebase.auth().currentUser;
+  if (!user) {
+    console.warn("⚠️ User not authenticated");
+    return;
   }
-}
 
+  const relaysRef = firebase.database().ref("Relays");
+  const offState = {
+    relay1: false,
+    relay2: false,
+    relay3: false,
+    relay4: false
+  };
 
-function startReadingStatus() {
-  const db = firebase.database();
-  for (let i = 1; i <= 4; i++) {
-    db.ref('Relays/relay' + i).on('value', snapshot => {
-      const status = snapshot.val();
-      document.getElementById('status' + i).innerText = 'Status: ' + (status ? 'ON' : 'OFF');
-    }, error => {
-      console.error(`Error reading relay${i} status:`, error);
-      alert(`Realtime read error for relay${i}: ` + error.message);
+  relaysRef.set(offState)
+    .then(() => {
+      console.log("🛑 All relays turned OFF");
+      for (let i = 1; i <= 4; i++) {
+        document.getElementById(`status${i}`).textContent = "Status: OFF";
+      }
+    })
+    .catch((error) => {
+      console.error("❌ Failed to turn all relays OFF:", error);
     });
-  }
 }
-
