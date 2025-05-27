@@ -24,7 +24,7 @@ function logout() {
 
 function toggleRelay(relayNum) {
   const db = firebase.database();
-  const relayRef = db.ref('Relays/Relay' + relayNum);
+  const relayRef = db.ref('Relays/relay' + relayNum);
   relayRef.once('value').then(snapshot => {
     const currentState = snapshot.val();
     relayRef.set(!currentState);
@@ -34,14 +34,14 @@ function toggleRelay(relayNum) {
 function turnAllOff() {
   const db = firebase.database();
   for (let i = 1; i <= 4; i++) {
-    db.ref('Relays/Relay' + i).set(false);
+    db.ref('Relays/relay' + i).set(false);
   }
 }
 
 function startReadingStatus() {
   const db = firebase.database();
   for (let i = 1; i <= 4; i++) {
-    db.ref('Relays/Relay' + i).on('value', snapshot => {
+    db.ref('Relays/relay' + i).on('value', snapshot => {
       document.getElementById('status' + i).innerText =
         'Status: ' + (snapshot.val() ? 'ON' : 'OFF');
     });
