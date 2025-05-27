@@ -22,28 +22,28 @@ function logout() {
   });
 }
 
-function toggleRelay(relayNum) {
-  const db = firebase.database();
-  const relayRef = db.ref('Relays/relay' + relayNum);  // make sure it's lowercase if your DB uses `relay1`
+function toggleRelay(relayNumber) {
+  const relayPath = "Relays/relay" + relayNumber;
+  const relayRef = firebase.database().ref(relayPath);
 
-  relayRef.once('value')
+  relayRef.once("value")
     .then(snapshot => {
-      const currentState = snapshot.val();
-      relayRef.set(!currentState)
+      const currentValue = snapshot.val();
+      const newValue = !currentValue;
+
+      relayRef.set(newValue)
         .then(() => {
-          console.log(`Relay ${relayNum} toggled to ${!currentState}`);
+          console.log(`✅ Relay ${relayNumber} toggled to ${newValue}`);
         })
         .catch(error => {
-          console.error(`Failed to set relay${relayNum}:`, error);
-          alert("Write error: " + error.message);
+          console.error(`❌ Failed to write to Firebase for Relay ${relayNumber}:`, error);
         });
+
     })
     .catch(error => {
-      console.error(`Failed to read relay${relayNum}:`, error);
-      alert("Read error: " + error.message);
+      console.error(`❌ Failed to read Firebase value for Relay ${relayNumber}:`, error);
     });
 }
-
 
 function turnAllOff() {
   const db = firebase.database();
