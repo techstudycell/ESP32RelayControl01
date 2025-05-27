@@ -6,14 +6,14 @@ function login() {
 
   firebase.auth().signInWithEmailAndPassword(email, password)
     .then((userCredential) => {
-      user = userCredential.user;
+      console.log("✅ Login successful", userCredential.user);
       document.getElementById("relayContainer").style.display = "block";
-      startReadingStatus();
     })
     .catch((error) => {
-      alert("Login failed: " + error.message);
+      console.error("❌ Login failed", error.message);
     });
 }
+
 
 function logout() {
   firebase.auth().signOut().then(() => {
